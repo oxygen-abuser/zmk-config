@@ -6,7 +6,7 @@
 # `artifact-name` to assign a name to distinguish build outputs from each other:
 #
 include:
-  - board: nice_nano_v2
+  - board: nice_nano
     shield: cck_ball_left
-  - board: nice_nano_v2
+  - board: nice_nano
     shield: cck_ball_right
