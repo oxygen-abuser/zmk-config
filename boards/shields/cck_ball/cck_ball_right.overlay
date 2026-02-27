@@ -3,8 +3,9 @@
  *
  * SPDX-License-Identifier: MIT
  */
- 
+
 #include "cck_ball.dtsi"
+#include <zephyr/dt-bindings/input/input-event-codes.h>
 
 &default_transform {
     col-offset = <6>;
@@ -51,13 +52,15 @@
 
     trackball: trackball@0 {
         status = "okay";
-        compatible = "pixart,pmw3610";
+        compatible = "pixart,pmw3610-alt";
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&gpio0 6 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-        scroll-layers = <3>;
-        snipe-layers = <4>;
-      // automouse-layer = <3>;
+        cpi = <600>;
+        evt-type = <INPUT_EV_REL>;
+        x-input-code = <INPUT_REL_X>;
+        y-input-code = <INPUT_REL_Y>;
+        swap-xy;
     };
 };
 
@@ -106,9 +109,37 @@
 
 
 / {
+    zip_xy_to_scroll_mapper: zip_xy_to_scroll_mapper {
+        compatible = "zmk,input-processor-code-mapper";
+        #input-processor-cells = <0>;
+        type = <INPUT_EV_REL>;
+        map = <INPUT_REL_X INPUT_REL_HWHEEL
+               INPUT_REL_Y INPUT_REL_WHEEL>;
+    };
+
+    zip_xy_scaler: zip_xy_scaler {
+        compatible = "zmk,input-processor-scaler";
+        #input-processor-cells = <2>;
+        type = <INPUT_EV_REL>;
+        codes = <INPUT_REL_X INPUT_REL_Y>;
+    };
+
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
+
+        /* layer 3: scroll mode — scale movement down then remap to scroll axes */
+        scroll {
+            layers = <3>;
+            input-processors = <&zip_xy_scaler 1 16
+                                 &zip_xy_to_scroll_mapper>;
+        };
+
+        /* layer 4: snipe mode — reduce cursor speed for precision */
+        snipe {
+            layers = <4>;
+            input-processors = <&zip_xy_scaler 1 4>;
+        };
     };
 };
 
